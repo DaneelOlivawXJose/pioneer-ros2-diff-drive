@@ -102,8 +102,8 @@ The robot is organized into three integrated layers:
   <img src="docs/media/cad_render_3.png" width="32%">
 </p>
 
-- **Chassis:** custom-designed, differential drive, [material/manufacturing — 3D printed / laser-cut / aluminum]
-- **Drive:** 2x DC gear motors + encoders, differential kinematics
+- **Chassis:** custom-designed, differential drive, [material/manufacturing — 3D printed]
+- **Drive:** 2x DC gear motors + encoders, L298 Driver.
 - **CAD files:** provided in [`/hardware/cad`](./hardware/cad) (STEP, native format, and STL for printing)
 
 📄 **Full Bill of Materials:** [`/hardware/BOM.xlsx`](./hardware/BOM.xlsx)
