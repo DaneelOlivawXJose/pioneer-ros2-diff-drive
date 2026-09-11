@@ -6,9 +6,6 @@
 
 **Mechanical design · Electronics · Embedded firmware · ROS 2 · Control Algorithms · Custom SCADA (React)**
 
-<!-- 🖼️ PLACEHOLDER: Replace with your best hero shot / GIF of the robot moving, ideally with the SCADA dashboard side by side -->
-![Robot Banner](docs/media/banner.gif)
-
 [![ROS2](https://img.shields.io/badge/ROS2-Humble-22314E?style=for-the-badge&logo=ros&logoColor=white)](#)
 [![ESP32](https://img.shields.io/badge/ESP32-Firmware-E7352C?style=for-the-badge&logo=espressif&logoColor=white)](#)
 [![React](https://img.shields.io/badge/React-SCADA-61DAFB?style=for-the-badge&logo=react&logoColor=black)](#)
@@ -121,40 +118,72 @@ The robot is organized into three integrated layers:
 
 ## 🔌 Electronics & Wiring
 
-<!-- 🖼️ PLACEHOLDER: Full wiring/connection diagram (Fritzing, KiCad schematic, or hand-drawn and cleaned up), plus a photo of the real wiring inside the chassis -->
+- Pin mapping source of truth: [`/firmware/esp32_code/esp32_code.ino`](./firmware/esp32_code/esp32_code.ino) — every pin below is taken directly from the running firmware, not from a separate (and easily outdated) diagram.
+### Core components
+ 
+| Component | Qty | Role | Notes |
+|---|---|---|---|
+| **ESP32 Dev Board** | 1 | Main controller — runs micro-ROS, PID loops, sensor filtering | Communicates with the ROS 2 side over WiFi via micro-ROS (`set_microros_wifi_transports`) |
+| **L298N Dual H-Bridge** | 1 | Drives both DC motors | Controlled via 2 PWM-capable pins per motor (no separate ENA/ENB — direction and speed are combined through both inputs, see table below) |
+| **DC Gearmotor + Encoder** | 2 | Traction (differential drive) | Quadrature encoders, read via hardware interrupts on both channels for direction-aware counting |
+| **US-016 Analog Ultrasonic Sensor** | 3 | Front obstacle detection | Each sensor has its own dedicated **2nd-order Butterworth low-pass filtering circuit** on the analog output before reaching the ESP32 ADC |
+| **18650 Li-ion cells** | 2 | Main power source for motors/logic rail | Feed the charger/boost module below |
+| **Type-C Li-ion Charger + DC-DC Boost Module (15 W, 3 A, 9 V out, UPS-style)** | 1 | Battery management + step-up to 9 V | Charges the 2×18650 pack via USB-C while also acting as a boost converter, delivering a stable 9 V rail to the L298N — UPS-style topology means the robot can charge and stay powered at the same time |
+| **Phone power bank** | 1 | Dedicated 5 V supply for the ESP32 | Electrically decoupled from the motor power rail — keeps motor-driver switching noise away from the microcontroller's logic supply. Prevents shutting down due to current |
+ 
+<!-- ✍️ DEVELOP MORE: link your exact ESP32 board model, L298N vendor, DC motor/encoder specs (gearbox ratio, encoder PPR), and add real purchase/datasheet links where you have them. -->
+ 
+### Power architecture
+ 
+The robot deliberately runs **two independent power domains**:
+ 
+1. **Motor / actuation rail (9 V):** 2×18650 cells → Type-C charger/boost module → 9 V → L298N → motors. The boost module's UPS behavior allows charging without powering the robot down.
+2. **Logic rail (5 V):** a standalone phone power bank feeds the ESP32 directly over USB.
+This separation avoids voltage sag and PWM switching noise from the motors affecting the ESP32's ADC readings — which matters here, since the ultrasonic sensors are read as raw analog voltages and are sensitive to supply noise.
+Also sometimes when starting the motors, the current was so high that restarted all the system, this power bank prevents this issue.
+ 
+### Motor driver (L298N) pin mapping
+ 
+| Signal | ESP32 Pin | Notes |
+|---|---|---|
+| Left motor – IN1 | `GPIO 32` | PWM output (`ledcAttach`, 25 kHz, 10-bit) |
+| Left motor – IN2 | `GPIO 33` | PWM output |
+| Right motor – IN1 | `GPIO 27` | PWM output |
+| Right motor – IN2 | `GPIO 14` | PWM output |
+ 
+Each motor is driven by **two PWM channels instead of a PWM+direction pair**: forward/reverse and speed are both encoded by driving one of the two `INx` pins with a PWM duty cycle while the other stays at 0 (see `setMotorL` / `setMotorR` in the firmware). This removes the need for separate `ENA`/`ENB` enable lines.
+ 
+### Encoders (quadrature, interrupt-driven)
+ 
+| Signal | ESP32 Pin | Notes |
+|---|---|---|
+| Left encoder – Channel A | `GPIO 25` | `INPUT_PULLUP`, `CHANGE` interrupt |
+| Left encoder – Channel B | `GPIO 26` | `INPUT_PULLUP`, `CHANGE` interrupt |
+| Right encoder – Channel A | `GPIO 12` | `INPUT_PULLUP`, `CHANGE` interrupt |
+| Right encoder – Channel B | `GPIO 13` | `INPUT_PULLUP`, `CHANGE` interrupt |
+ 
+Both channels of each encoder trigger their own ISR, comparing A/B state to determine direction — giving full quadrature resolution (4x counting) rather than relying on a single edge.
+ 
+### Ultrasonic sensors (US-016, analog)
+ 
+| Signal | ESP32 Pin | ADC | Notes |
+|---|---|---|---|
+| Sensor 1 (analog out) | `GPIO 36` | ADC1_CH0 | Voltage divider + 2nd-order Butterworth filter upstream |
+| Sensor 2 (analog out) | `GPIO 39` | ADC1_CH3 | Voltage divider + 2nd-order Butterworth filter upstream |
+| Sensor 3 (analog out) | `GPIO 34` | ADC1_CH6 | 2nd-order Butterworth filter upstream (read directly in mV, no divider) |
+ 
+All three run on ADC1 (safe to use alongside WiFi, unlike ADC2). Each sensor's raw output passes through a dedicated **2nd-order Butterworth low-pass filter** before reaching the ESP32, reducing high-frequency noise at the hardware level; the firmware then applies a further **median filter (7 samples) + exponential smoothing (α = 0.3)** in software, read continuously from a dedicated FreeRTOS task (`tareaLecturaUS016`) so sensor sampling never blocks the ROS 2 executor or the PID control loop.
+ 
+### Status LED
+ 
+| Signal | ESP32 Pin | Notes |
+|---|---|---|
+| Onboard status LED | `GPIO 2` | Blinks/toggles on obstacle detection and on odometry reset, doubles as a fatal-error indicator (`error_loop`) |
+ 
+<!-- 🖼️ PLACEHOLDER: A labeled photo of the real wiring inside the chassis, matching the tables above, is worth more here than any diagram. -->
 
-![Wiring Diagram](docs/media/wiring_diagram.png)
-
-- Full schematic: [`/hardware/electronics/schematic.pdf`](./hardware/electronics)
-- Component datasheets: [`/hardware/electronics/datasheets`](./hardware/electronics/datasheets)
-
-<!-- ✍️ DEVELOP MORE: List the main components (motor driver model, ESP32 dev board, encoders type, power distribution/voltage regulation, any sensors) and explain any non-obvious design decisions (e.g. why you chose that motor driver, isolation, current sensing, etc.) -->
-
----
-
-## 💾 Firmware (ESP32)
-
-Location: [`/firmware`](./firmware)
-
-The ESP32 handles the real-time, deterministic parts of the robot:
-
-- PWM motor control + direction
-- Quadrature encoder reading (interrupt-driven)
-- Closed-loop wheel velocity control (PID)
-- Differential drive kinematics (cmd_vel → wheel speeds)
-- Odometry computation
-- Communication with the ROS 2 side (serial / micro-ROS / WiFi — *specify which*)
-
-<!-- ✍️ DEVELOP MORE: Specify the exact communication method with ROS2 (micro-ROS agent? rosserial? custom serial protocol over UART? WiFi/UDP?), control loop frequency, PID tuning approach, and any safety features (watchdog, e-stop, timeout on cmd_vel). -->
-
-```
-firmware/
-├── src/
-├── include/
-├── platformio.ini   (or .ino if Arduino IDE)
-└── README.md        → firmware-specific notes
-```
-
+![Top-down view](docs/media/top.jpeg)
+ 
 ---
 
 ## 🐢 ROS 2 Software Stack
