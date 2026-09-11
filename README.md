@@ -192,13 +192,44 @@ Location: [`/ros2_ws/src`](./ros2_ws/src)
 
 <!-- 🖼️ PLACEHOLDER: rqt_graph screenshot showing your actual node/topic graph -->
 
-![ROS2 Graph](docs/media/rqt_graph.png)
+![Ubuntu Terminal](docs/media/terminal.PNG)
 
 Custom ROS 2 packages built for this robot. The architecture keeps control algorithms and hardware interfaces decoupled into their own packages/nodes, so new ones can be added without modifying the core stack.
 
-<!-- ✍️ DEVELOP MORE: Adjust package names/table to your actual repo. Mention if you use Nav2, robot_localization, or fully custom nodes. Mention simulation support if you have a Gazebo/Ignition model of the robot. -->
-
----
+### 🧠 Master / Orchestrator architecture
+ 
+Rather than launching every control node at once and switching behavior through internal flags, this stack uses a **master (orchestrator) node** that supervises which algorithm is actually running:
+ 
+1. The **master node** stays up permanently, subscribed to a command topic (e.g. `/control/select_algorithm`).
+2. When a command arrives on that topic — coming from the SCADA, a CLI call, or any other client — the master **launches the corresponding control node as its own process** (e.g. `ros2 run pioneer_control mpc_node`), rather than that node being active from boot.
+3. The incoming message is **forwarded to the newly launched node** (as a parameter, an initial topic message, or a service call, depending on the node), so it starts already configured with the requested behavior.
+4. If a different algorithm is requested while one is already running, the master **stops/kills the current control node's process first**, then spawns the new one — guaranteeing only one control node is ever commanding the robot at a time.
+This keeps every control algorithm fully decoupled: each one lives in its own node/process, with no shared state, and the master is the single source of truth for *which* algorithm currently owns `cmd_vel`. Adding a new algorithm means writing a new node and registering it with the master — no changes to the rest of the stack.
+ 
+### ▶️ How to Run
+ 
+Typical startup sequence, in order:
+ 
+1. **Start the micro-ROS agent** (bridges the ESP32's WiFi micro-ROS client to the ROS 2 graph):
+```bash
+   ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888
+```
+ 
+2. **Power on the robot / reset the ESP32** so it connects to the agent above (watch the serial monitor or the agent log for a successful handshake).
+3. **Launch the rosbridge server**
+```bash
+   ros2 launch rosbridge_server rosbridge_websocket_launch.xml
+```
+ 
+4. **Launch the master/orchestrator node**, which will stay running and wait for algorithm-selection commands:
+```bash
+   ros2 run master_esp32 master_node
+```
+ 
+5. **Start the SCADA dashboard**:
+```bash
+   npm run dev
+```
 
 ## 🎯 Control & Path-Tracking Algorithms
 
@@ -262,7 +293,7 @@ A custom-built, real-time supervisory dashboard, developed entirely in React, th
 ![ROS2 Humble](https://img.shields.io/badge/-ROS2-22314E?style=flat-square&logo=ros&logoColor=white)
 ![ESP32](https://img.shields.io/badge/-ESP32-E7352C?style=flat-square&logo=espressif&logoColor=white)
 ![React](https://img.shields.io/badge/-React-61DAFB?style=flat-square&logo=react&logoColor=black)
-![SolidWorks](https://img.shields.io/badge/-Fusion360-F57C00?style=flat-square&logo=autodesk&logoColor=white)
+![SolidWorks](https://img.shields.io/badge/-SolidWorks-F57C00?style=flat-square&logo=autodesk&logoColor=white)
 
 </div>
 
