@@ -194,15 +194,7 @@ Location: [`/ros2_ws/src`](./ros2_ws/src)
 
 ![ROS2 Graph](docs/media/rqt_graph.png)
 
-Custom ROS 2 packages built for this robot. The architecture keeps control algorithms and hardware interfaces decoupled into their own packages/nodes, so new ones can be added without modifying the core stack:
-
-| Package | Purpose |
-|---|---|
-| `pioneer_driver` | Serial/micro-ROS bridge to the ESP32, publishes odom, subscribes to cmd_vel |
-| `pioneer_control` | Path-tracking controllers (MPC, Follow the Carrot, etc.) |
-| `pioneer_localization` | Sensor fusion / localization node(s) |
-| `pioneer_bringup` | Launch files, parameter configs |
-| `pioneer_bridge` | rosbridge/WebSocket interface exposed to the SCADA |
+Custom ROS 2 packages built for this robot. The architecture keeps control algorithms and hardware interfaces decoupled into their own packages/nodes, so new ones can be added without modifying the core stack.
 
 <!-- ✍️ DEVELOP MORE: Adjust package names/table to your actual repo. Mention if you use Nav2, robot_localization, or fully custom nodes. Mention simulation support if you have a Gazebo/Ignition model of the robot. -->
 
@@ -214,10 +206,10 @@ One of the standout features of this project: the robot supports **multiple, hot
 
 | Algorithm | Description | Status |
 |---|---|---|
+| **Proportional** | Classic proportional controller | ✅ Implemented |
 | **Follow the Carrot** | Classic pursuit of a moving lookahead point on the path | ✅ Implemented |
 | **MPC (Model Predictive Control)** | Optimization-based control over a prediction horizon | ✅ Implemented |
-| **Pure Pursuit** | *(if implemented)* | 🔲 |
-| **PID path following** | *(if implemented)* | 🔲 |
+| **Implicit Path Following** | Based on references like 1 wall / 2 wall / Moving objective | ✅ Implemented |
 
 <!-- ✍️ DEVELOP MORE: This is your strongest technical differentiator — expand heavily here.
 For EACH algorithm, add:
@@ -226,12 +218,10 @@ For EACH algorithm, add:
 - A GIF/plot comparing behavior (e.g. tracking error over time) between algorithms on the same path
 - Why you chose to implement each one / what you learned
 Consider linking to a `/docs/control_theory.md` or similar for the deep technical writeup, and keeping this section as a summary. -->
-
-<p align="center">
-  <img src="docs/media/mpc_vs_carrot.png" width="70%">
-</p>
-
-*<!-- 🖼️ PLACEHOLDER: plot comparing cross-track error of the algorithms, generated from rosbag data -->*
+Every algorithm is tunnable from scada:
+| Pure Pursuit | MPC |
+|---|---|
+| ![Pure Pursuit](docs/media/algo_1.PNG) | ![MPC](docs/media/algo_2.PNG) |
 
 ---
 
@@ -241,51 +231,27 @@ Location: [`/scada`](./scada)
 
 <!-- 🖼️ PLACEHOLDER: Screenshot or GIF of the dashboard — ideally a few, showing: live map/localization, telemetry panel, algorithm selector, manual command panel -->
 
-![SCADA Dashboard](docs/media/scada_dashboard.png)
+![SCADA Dashboard](docs/media/scada_dashboard.PNG)
 
 A custom-built, real-time supervisory dashboard, developed entirely in React, that connects directly to the ROS 2 stack:
 
 - 📍 **Real-time localization view** — live robot pose over the map/path
 - 🎮 **Manual command interface** — teleoperation, direct velocity commands
+- 🤖 **Robot parameters tunner** — width, wheel radius, ...
 - 🔀 **Algorithm selector** — switch between MPC / Follow the Carrot / others on the fly
 - 📊 **Live telemetry** — velocities, battery, control errors, system status
-- 🛑 **Safety controls** — *(e-stop, connection status, etc. — specify)*
+- 📡 **Sensor Calibration** — lineal, cuadratic, least square adjustment
+- 🛑 **Safety controls** — *(e-stop, connection status, etc)*
 
 **Stack:** React, [state management — Redux/Zustand/Context], [charting — Recharts/D3/Plotly], [ROS bridge — roslibjs + rosbridge_suite / custom WebSocket server]
 
-<!-- ✍️ DEVELOP MORE: This is a major selling point — most portfolio robots don't have a custom SCADA. Expand with:
-- Architecture diagram of how React talks to ROS2 (rosbridge_suite? custom Node.js/Python WebSocket bridge?)
-- Screenshots of every major view/panel
-- A short GIF of switching algorithms live and seeing the robot's behavior change
-- Any interesting frontend engineering choices (canvas/SVG rendering of the map, performance considerations for real-time data, etc.) -->
+![SCADA Topologic Planning](docs/media/topo_scada.PNG)
 
-```
-scada/
-├── src/
-│   ├── components/
-│   ├── hooks/
-│   ├── services/       → ROS/WebSocket connection layer
-│   └── pages/
-├── public/
-└── package.json
-```
+![SCADA Sensor Calibration](docs/media/sensor_cal.PNG)
 
----
+![SCADA Robot Parameters](docs/media/param_scada.PNG)
 
-## 📡 Localization
 
-<!-- ✍️ DEVELOP MORE: Explain how the robot knows where it is. Options to describe:
-- Wheel odometry only?
-- Fused with IMU via EKF (robot_localization)?
-- LiDAR-based (AMCL / SLAM)?
-- Any external reference (motion capture, markers)?
-Include an accuracy discussion / drift characterization if you have data (e.g. "drift of X cm over Y meters"). -->
-
-<!-- 🖼️ PLACEHOLDER: Plot of estimated trajectory vs ground truth / vs commanded path -->
-
-![Localization Plot](docs/media/localization_plot.png)
-
----
 
 ## 🧰 Tech Stack Summary
 
@@ -293,14 +259,12 @@ Include an accuracy discussion / drift characterization if you have data (e.g. "
 
 ![C++](https://img.shields.io/badge/-C++-00599C?style=flat-square&logo=c%2B%2B&logoColor=white)
 ![Python](https://img.shields.io/badge/-Python-3776AB?style=flat-square&logo=python&logoColor=white)
-![ROS2](https://img.shields.io/badge/-ROS2-22314E?style=flat-square&logo=ros&logoColor=white)
+![ROS2 Humble](https://img.shields.io/badge/-ROS2-22314E?style=flat-square&logo=ros&logoColor=white)
 ![ESP32](https://img.shields.io/badge/-ESP32-E7352C?style=flat-square&logo=espressif&logoColor=white)
 ![React](https://img.shields.io/badge/-React-61DAFB?style=flat-square&logo=react&logoColor=black)
 ![SolidWorks](https://img.shields.io/badge/-Fusion360-F57C00?style=flat-square&logo=autodesk&logoColor=white)
 
 </div>
-
-<!-- ✍️ DEVELOP MORE: Trim/adjust to your actual tools (which CAD software, which PCB tool if any, which specific ROS2 distro, which charting lib in React, etc.) -->
 
 ---
 
@@ -336,6 +300,6 @@ Robotics / Mechatronics engineer
 
 <div align="center">
 
-*Built with ⚙️ hardware, 🧠 control theory, and 💻 a lot of debugging.*
+*4 8 15 16 23 42*
 
 </div>
