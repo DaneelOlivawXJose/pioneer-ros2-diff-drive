@@ -97,9 +97,9 @@ The robot is organized into three integrated layers:
 <!-- 🖼️ PLACEHOLDER: CAD renders — exploded view, chassis, wheel assembly, top view with dimensions -->
 
 <p align="center">
-  <img src="docs/media/cad_render_1.png" width="32%">
-  <img src="docs/media/cad_render_2.png" width="32%">
-  <img src="docs/media/cad_render_3.png" width="32%">
+  <img src="docs/media/render_1.PNG" width="32%">
+  <img src="docs/media/render_2.PNG" width="32%">
+  <img src="docs/media/render_3.PNG" width="32%">
 </p>
 
 - **Chassis:** custom-designed, differential drive, [material/manufacturing — 3D printed]
@@ -112,14 +112,10 @@ The robot is organized into three integrated layers:
 
 | Spec | Value |
 |---|---|
-| Dimensions (L×W×H) | TBD |
-| Weight | TBD |
-| Wheelbase | TBD |
-| Wheel diameter | TBD |
-| Max linear speed | TBD |
-| Sensors onboard | TBD |
-| Battery / autonomy | TBD |
-| Compute onboard | TBD |
+| Dimensions (L×W×H) | 500x450x100 mm |
+| Weight | 600g |
+| Max linear speed | 4.0 m/s |
+| Battery / autonomy | 3h |
 
 ---
 
@@ -262,47 +258,6 @@ Include an accuracy discussion / drift characterization if you have data (e.g. "
 
 ---
 
-## 📂 Repository Structure
-
-```
-pioneer-x/
-├── hardware/
-│   ├── cad/                  # STEP / native CAD + STL files
-│   ├── electronics/
-│   │   ├── schematic.pdf
-│   │   └── datasheets/
-│   └── BOM.xlsx
-│
-├── firmware/                 # ESP32 low-level control code
-│   ├── src/
-│   ├── include/
-│   └── platformio.ini
-│
-├── ros2_ws/
-│   └── src/
-│       ├── pioneer_driver/
-│       ├── pioneer_control/       # MPC, Follow the Carrot, etc.
-│       ├── pioneer_localization/
-│       ├── pioneer_bridge/        # rosbridge / WebSocket layer
-│       └── pioneer_bringup/       # launch files, configs
-│
-├── scada/                    # React real-time dashboard
-│   ├── src/
-│   └── public/
-│
-├── docs/
-│   ├── media/                 # images, gifs, diagrams for this README
-│   ├── architecture.md        # (optional deep-dive doc)
-│   └── control_theory.md      # (optional deep-dive doc)
-│
-├── LICENSE
-└── README.md
-```
-
-<!-- ✍️ DEVELOP MORE: Adjust this tree to match your ACTUAL folder names exactly before publishing — this must mirror the real repo 1:1. -->
-
----
-
 ## 🧰 Tech Stack Summary
 
 <div align="center">
@@ -312,34 +267,11 @@ pioneer-x/
 ![ROS2](https://img.shields.io/badge/-ROS2-22314E?style=flat-square&logo=ros&logoColor=white)
 ![ESP32](https://img.shields.io/badge/-ESP32-E7352C?style=flat-square&logo=espressif&logoColor=white)
 ![React](https://img.shields.io/badge/-React-61DAFB?style=flat-square&logo=react&logoColor=black)
-![Node.js](https://img.shields.io/badge/-Node.js-339933?style=flat-square&logo=node.js&logoColor=white)
-![KiCad](https://img.shields.io/badge/-KiCad-314CB0?style=flat-square&logo=kicad&logoColor=white)
-![Fusion360](https://img.shields.io/badge/-Fusion360-F57C00?style=flat-square&logo=autodesk&logoColor=white)
+![SolidWorks](https://img.shields.io/badge/-Fusion360-F57C00?style=flat-square&logo=autodesk&logoColor=white)
 
 </div>
 
 <!-- ✍️ DEVELOP MORE: Trim/adjust to your actual tools (which CAD software, which PCB tool if any, which specific ROS2 distro, which charting lib in React, etc.) -->
-
----
-
-## 📈 Results & Performance
-
-<!-- ✍️ DEVELOP MORE: This section turns the project from "cool" into "credible." Include hard numbers if you have them, e.g.:
-- Tracking error (mean/max cross-track error) per algorithm
-- Control loop frequency achieved
-- Localization drift over distance/time
-- Battery life / operating autonomy
-- Max speed achieved reliably
-- Latency of the SCADA (command sent → robot reacts)
-Use a table + at least one plot generated from real logged data (rosbag / CSV export). -->
-
-| Metric | Value |
-|---|---|
-| Control loop frequency | TBD |
-| Mean cross-track error (MPC) | TBD |
-| Mean cross-track error (Follow the Carrot) | TBD |
-| Localization drift | TBD |
-| SCADA end-to-end latency | TBD |
 
 ---
 
