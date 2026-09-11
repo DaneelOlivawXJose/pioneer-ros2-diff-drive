@@ -49,7 +49,7 @@ In short: this repo is a living platform for experimenting with mobile robot con
 
 | Autonomous navigation | Real-time SCADA monitoring | Manual teleoperation |
 |---|---|---|
-| ![nav](docs/media/follow_carrot.mp4) | ![scada](docs/media/follow_carrotVIdeo.mp4) | ![teleop](docs/media/teleop_demo.gif) |
+| ![nav](docs/media/follow_carrot.gif) | ![scada](docs/media/follow_carrotVIdeo.gif) | ![teleop](docs/media/teleop_demo.gif) |
 
 <!-- ✍️ DEVELOP MORE: Add a "Full demo video" section here with a YouTube/Drive link, ideally 2-4 minutes showing: boot-up, teleop, autonomous path-following with each algorithm, and the SCADA reacting live. -->
 
